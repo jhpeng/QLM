@@ -21,7 +21,7 @@ LFLAGS	= -L/usr/local/lib
 LIBS	= -lm -lgsl -lgslcblas
 
 # define the C object files
-OBJS	=  update.o dtype.o union_find.o models.o stats.o
+OBJS	=  update.o dtype.o union_find.o model.o stats.o
 
 
 #define the directory for object
