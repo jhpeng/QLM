@@ -37,12 +37,8 @@ void remove_vertices(world_line* w) {
     w->flag = !(w->flag);
 }
 
-void insert_vertices_sublattice(world_line* w, model* m, double* insert_taus, int* insert_bonds, int insert_len) {
-    double sum_weight_sublattice = niste*0.5*(1+lambda);
-    double lam = sum_weight_sublattice_A*(w->beta);
-
-    int length = insert_len+w->nvertices;
-    realloc_world_line(w,length);
+void insert_vertices(world_line* w, model* m, double* insert_taus, int* insert_bonds, int insert_len) {
+    realloc_world_line(w,insert_len+w->nvertices);
 
     vertex* sequence1 = w->sequenceB;
     vertex* sequence2 = w->sequenceA;
@@ -57,33 +53,33 @@ void insert_vertices_sublattice(world_line* w, model* m, double* insert_taus, in
     for(int i=0;i<nsite;i++) pstate[i] = w->istate[i];
 
     vertex* v;
-    int n,i,index_old,i_site,index;
-    double tau_run,tau_propose;
+    int index_new, i, index_old, i_site, index;
+    double tau_run, tau_propose;
 
     int mhnspin = m->mhnspin;
     int lstate[mhnspin];
 
-    index_old=0;
-    n=0;
+    index_old = 0;
+    index_new = 0;
 
     tau_run = 0;
-    if(w->nvertices!=0) tau_run = (sequence1[0]).tau;
+    if(w->nvertices != 0) tau_run = (sequence1[0]).tau;
 
-    for(i=0;i<insert_len;i++) {
+    for(i = 0; i < insert_len; i++) {
         tau_propose = insert_taus[i];
 
-        while((tau_run<tau_propose) && (index_old<(w->nvertices))) {
+        while((tau_run < tau_propose) && (index_old < (w->nvertices))) {
             v = &(sequence1[index_old]);
-            for(i_site=0;i_site<(v->hNspin);i_site++) {
-                index = m->bond2index[v->bond*mhnspin+i_site];
-                pstate[index] = v->state[v->hNspin+i_site];
+            for(i_site = 0; i_site < (v->hNspin); i_site++) {
+                index = m->bond2index[v->bond * mhnspin + i_site];
+                pstate[index] = v->state[v->hNspin + i_site];
             }
 
-            copy_vertex(&(sequence2[n]),v);
-            n++;
+            copy_vertex(&(sequence2[index_new]), v);
+            index_new++;
             index_old++;
 
-            if(index_old<(w->nvertices)){
+            if(index_old < (w->nvertices)) {
                 tau_run = (sequence1[index_old]).tau;
             }
         }
@@ -93,31 +89,32 @@ void insert_vertices_sublattice(world_line* w, model* m, double* insert_taus, in
         int hNspin   = m->bond2hNspin[bond];
         insert_rule rule = m->insert[t];
 
-        for(i_site=0;i_site<hNspin;i_site++) { 
-            index = m->bond2index[bond*mhnspin+i_site];
+        for(i_site = 0; i_site < hNspin; i_site++) { 
+            index = m->bond2index[bond * mhnspin + i_site];
             lstate[i_site] = pstate[index];
         }
 
         if(rule(lstate)) {
-            (sequence2[n]).tau    = tau_propose;
-            (sequence2[n]).bond   = bond;
-            (sequence2[n]).hNspin = hNspin;
+            (sequence2[index_new]).tau    = tau_propose;
+            (sequence2[index_new]).bond   = bond;
+            (sequence2[index_new]).hNspin = hNspin;
 
-            for(i_site=0;i_site<hNspin;i_site++) {
-                (sequence2[n]).state[i_site]        = lstate[i_site];
-                (sequence2[n]).state[i_site+hNspin] = lstate[i_site];
+            for(i_site = 0; i_site < hNspin; i_site++) {
+                (sequence2[index_new]).state[i_site]        = lstate[i_site];
+                (sequence2[index_new]).state[i_site + hNspin] = lstate[i_site];
             }
 
-            n++;
+            index_new++;
         }
     }
 
-    while(index_old<(w->nvertices)) {
-        copy_vertex(&(sequence2[n]),&(sequence1[index_old]));
-        n++;
+    while(index_old < (w->nvertices)) {
+        copy_vertex(&(sequence2[index_new]), &(sequence1[index_old]));
+        index_new++;
         index_old++;
     }
 
-    w->nvertices = n;
+    w->nvertices = index_new;
     w->flag = !(w->flag);
 }
+
