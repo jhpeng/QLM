@@ -31,7 +31,7 @@ OBJSDIR = object
 MAIN	= exe
 
 # define the main srouce file
-MAINSRC = projects/main.c
+MAINSRC = main.c
 
 all: $(MAIN)
 

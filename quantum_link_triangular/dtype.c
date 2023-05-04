@@ -31,7 +31,6 @@ model* malloc_model(int nsite, int nbond, int mhnspin) {
         printf("# link        : %zu bytes\n",sizeof(int)*mhnspin*4*20);
         printf("# insert      : %zu bytes\n",sizeof(insert_rule)*20);
         printf("# cmf         : %zu bytes\n",sizeof(double)*nbond);
-        printf("-------------------------------------------\n");
 
     }
 
