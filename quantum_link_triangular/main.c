@@ -294,18 +294,29 @@ double measure_mb(int* state, int lx, int ly) {
     return (double)mb;
 }
 
-int main() {
-    int Lx = 32;
-    int Ly = 32;
-    double Beta = 1.0;
+int main(int argc, char** argv) {
+    int Lx = 8;
+    int Ly = 8;
     double Lambda = 1.0;
-    int distance = 16;
-    int Nsample=1000000;
+    double Beta = 10;
+    int distance = 0;
+    int Nsample=4000;
     int Nthermal=10000;
-    unsigned long int seed = 3984793;
+    unsigned long int Seed = 1;
+
+    if(argc>1){
+        Lx = atoi(argv[1]);
+        Ly = atoi(argv[2]);
+        Lambda = atof(argv[3]);
+        Beta = atof(argv[4]);
+        distance = atoi(argv[5]);
+        Nthermal = atoi(argv[6]);
+        Nsample = atoi(argv[7]);
+        Seed = atoi(argv[8]);
+    }
 
     gsl_rng* rng = gsl_rng_alloc(gsl_rng_mt19937);
-    gsl_rng_set(rng,seed);
+    gsl_rng_set(rng,Seed);
 
     model* m = quantum_link_triangular_lattice(Lx,Ly,Lambda);
 
@@ -352,6 +363,7 @@ int main() {
         append_estimator(est_mb4,mb4);
 
         // save checkpoint
+        check_point++;
         if(check_point>=1000) {
             print_detail(est_ma1);
             print_detail(est_mb1);
@@ -362,6 +374,8 @@ int main() {
             save_estimator(est_mb1);
             save_estimator(est_mb2);
             save_estimator(est_mb4);
+
+            check_point=0;
         }
     }
 
