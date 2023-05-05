@@ -6,6 +6,7 @@
 #include "dtype.h"
 #include "model.h"
 #include "update.h"
+#include "stats.h"
 
 
 int uniform_sequence_sampling(double lam, double* sequence, int scap, gsl_rng* rng) {
@@ -267,15 +268,40 @@ void initial_state_with_charge(int* state, int lx, int ly, int distance){
     counting_charge(state,lx,ly);
 }
 
+double measure_ma(int* state, int lx, int ly) {
+    int sxy = lx*ly;
+
+    int ma=0;
+    for(int i=0; i<sxy; i++) {
+        ma+=state[i];
+    }
+
+    ma = abs(ma*2 - sxy);
+
+    return (double)ma;
+}
+
+double measure_mb(int* state, int lx, int ly) {
+    int sxy = lx*ly;
+
+    int mb=0;
+    for(int i=sxy; i<2*sxy; i++) {
+        mb+=state[i];
+    }
+
+    mb = abs(mb*2 - sxy);
+
+    return (double)mb;
+}
+
 int main() {
-    int Lx = 16;
-    int Ly = 16;
+    int Lx = 32;
+    int Ly = 32;
     double Beta = 1.0;
-    double Lambda = 0.6;
-    int distance = 8;
-    int Nblock=1000;
-    int Nsample=1000;
-    int Nthermal=10;
+    double Lambda = 1.0;
+    int distance = 16;
+    int Nsample=1000000;
+    int Nthermal=10000;
     unsigned long int seed = 3984793;
 
     gsl_rng* rng = gsl_rng_alloc(gsl_rng_mt19937);
@@ -285,7 +311,7 @@ int main() {
 
     int Nsite = m->nsite;
     int Mhnspin = m->mhnspin;
-    world_line* w = malloc_world_line(100000,2*Mhnspin,Nsite);
+    world_line* w = malloc_world_line(1000,2*Mhnspin,Nsite);
 
     w->beta = Beta;
 
@@ -298,6 +324,60 @@ int main() {
         counting_charge(w->istate, Lx, Ly);
     }
 
+    double ma1, mb1, ma2, mb2, ma4, mb4;
+    estimator* est_ma1 = malloc_estimator(1024,"ma1");
+    estimator* est_ma2 = malloc_estimator(1024,"ma2");
+    estimator* est_ma4 = malloc_estimator(1024,"ma4");
+    estimator* est_mb1 = malloc_estimator(1024,"mb1");
+    estimator* est_mb2 = malloc_estimator(1024,"mb2");
+    estimator* est_mb4 = malloc_estimator(1024,"mb4");
+
+    int check_point=0;
+    for(int i=0; i<Nsample; i++) {
+        update_sublattice_A(w, m, Lx, Ly, Lambda, rng);
+        update_sublattice_B(w, m, Lx, Ly, Lambda, rng);
+
+        ma1 = measure_ma(w->istate, Lx, Ly);
+        mb1 = measure_mb(w->istate, Lx, Ly);
+        ma2 = ma1*ma1;
+        mb2 = mb1*mb1;
+        ma4 = ma2*ma2;
+        mb4 = mb2*mb2;
+
+        append_estimator(est_ma1,ma1);
+        append_estimator(est_ma2,ma2);
+        append_estimator(est_ma4,ma4);
+        append_estimator(est_mb1,mb1);
+        append_estimator(est_mb2,mb2);
+        append_estimator(est_mb4,mb4);
+
+        // save checkpoint
+        if(check_point>=1000) {
+            print_detail(est_ma1);
+            print_detail(est_mb1);
+
+            save_estimator(est_ma1);
+            save_estimator(est_ma2);
+            save_estimator(est_ma4);
+            save_estimator(est_mb1);
+            save_estimator(est_mb2);
+            save_estimator(est_mb4);
+        }
+    }
+
+    save_estimator(est_ma1);
+    save_estimator(est_ma2);
+    save_estimator(est_ma4);
+    save_estimator(est_mb1);
+    save_estimator(est_mb2);
+    save_estimator(est_mb4);
+
+    free_estimator(est_ma1);
+    free_estimator(est_ma2);
+    free_estimator(est_ma4);
+    free_estimator(est_mb1);
+    free_estimator(est_mb2);
+    free_estimator(est_mb4);
     free_world_line(w);
     free_model(m);
 
