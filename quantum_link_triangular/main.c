@@ -332,7 +332,7 @@ int main(int argc, char** argv) {
         update_sublattice_A(w, m, Lx, Ly, Lambda, rng);
         update_sublattice_B(w, m, Lx, Ly, Lambda, rng);
 
-        counting_charge(w->istate, Lx, Ly);
+        // counting_charge(w->istate, Lx, Ly);
     }
 
     double ma1, mb1, ma2, mb2, ma4, mb4;
@@ -365,8 +365,8 @@ int main(int argc, char** argv) {
         // save checkpoint
         check_point++;
         if(check_point>=1000) {
-            print_detail(est_ma1);
-            print_detail(est_mb1);
+            // print_detail(est_ma1);
+            // print_detail(est_mb1);
 
             save_estimator(est_ma1);
             save_estimator(est_ma2);
